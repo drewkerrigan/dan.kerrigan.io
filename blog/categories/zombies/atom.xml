@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: zombies | dan.kerrigan.io]]></title>
+  <link href="http://dan.kerrigan.io/blog/categories/zombies/atom.xml" rel="self"/>
+  <link href="http://dan.kerrigan.io/"/>
+  <updated>2013-12-31T13:18:50-05:00</updated>
+  <id>http://dan.kerrigan.io/</id>
+  <author>
+    <name><![CDATA[Dan kerrigan]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Zombies]]></title>
+    <link href="http://dan.kerrigan.io/zombies/"/>
+    <updated>2013-12-31T12:53:57-05:00</updated>
+    <id>http://dan.kerrigan.io/zombies</id>
+    <content type="html"><![CDATA[<h1>The War against Zombies is still raging!</h1>
+
+<p>In the United States, the CDC has recovered 1 million Acute Zombilepsy vicitims and has asked for our help loading the data into a Riak cluster for analysis and ground team support.</p>
+
+<h2>Know the Zombies, Know Thyself</h2>
+
+<p>The future of the world rests in a CSV file with the following fields:</p>
+
+<ol>
+<li>DNA</li>
+<li>Gender</li>
+<li>Full Name</li>
+<li>StreetAddress</li>
+<li>City</li>
+<li>State</li>
+<li>Zip Code</li>
+<li>TelephoneNumber</li>
+<li>Birthday</li>
+<li>National ID</li>
+<li>Occupation</li>
+<li>BloodType</li>
+<li>Pounds</li>
+<li>Feet Inches</li>
+<li>Latitude</li>
+<li>Longitude</li>
+</ol>
+
+
+<p>For each record, we&rsquo;ll serialize this CSV document into JSON and use the National ID as the Key.  Our ground teams need the ability to find concentrations of recovered zombie victims using a map so we&rsquo;ll be using the Zip code as an index value for quick lookup.  Additionally, we want to enable a geospatial lookup for zombies so we&rsquo;ll also <a href="http://en.wikipedia.org/wiki/Geohash">GeoHash</a> the latitude and longitude, truncate the hash to 4 characters for approximate area lookup, and use that an index term.  We&rsquo;ll use the GSet Term-Based Inverted Indexes that we created since the dataset will be exclusively for read operations once the dataset has been loaded.  We&rsquo;ve hosted this project at <a href="http://github.com/drewkerrigan/riak-inverted-index-demo/">Github</a> so that in the event we&rsquo;re over taken by Zombies our work can continue.</p>
+
+<p>In our load script, we read the text file and create new Zombies, add Indexes, then store the record:</p>
+
+<p><img src="images/load_data.rb.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/load_data.rb">load_data.rb script</a></p>
+
+<p>Our Zombie model contains the code for serialization and adding the indexes to the object:</p>
+
+<p><img src="images/zombie.rb_add_index.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/models/zombie.rb#L66-L68">zombie.rb add index</a></p>
+
+<p>Let&rsquo;s run some quick tests against the Riak HTTP interface to verify that zombie data exists.</p>
+
+<p>First let&rsquo;s query for a known zombilepsy victim:</p>
+
+<p><code>curl -v http://127.0.0.1:8098/buckets/zombies/keys/427-69-8179</code></p>
+
+<p>Next, let&rsquo;s query the inverted index that we created.  If the index has not been merged, then a list of siblings will be displayed:</p>
+
+<p>Zip Code for Jackson, MS:<br/>
+<code>curl -v -H "Accept: multipart/mixed" http://127.0.0.1:8098/buckets/zip_inv/keys/39201</code></p>
+
+<p>GeoHash for Washington DC:<br/>
+<code>curl -v -H "Accept: multipart/mixed" http://127.0.0.1:8098/buckets/geohash_inv/keys/dqcj</code></p>
+
+<p>Excellent.  Now we just have to get this information in the hands of our field team. We&rsquo;ve created a basic application which will allow our user to search by Zip Code or by clicking on the map.  When the user clicks on the map, the server converts the latitude/longitude pair into a GeoHash and uses that to query the inverted index.</p>
+
+<h3>Colocation and Riak MDC will Zombie-Proof your application</h3>
+
+<p>First we&rsquo;ll create small Sinatra application with the two endpoints required to search for zip code and latitude/longitude:</p>
+
+<p><img src="images/server.rb_endpoints.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/server.rb#L13-L29">server.rb endpoints</a></p>
+
+<p>Our zombie model does the work to retrieve the indexes and build the result set:</p>
+
+<p><img src="images/zombie.rb_search_index.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/models/zombie.rb#L19-L31">zombie.rb search index</a></p>
+
+<h3>Saving the world, one UI at a time</h3>
+
+<p>Everything wired up with a basic HTML and JavaScript application:</p>
+
+<p><img src="images/ZombieSearch.png" alt="image" /></p>
+
+<p>Searching for Zombies in the Zip Code 39201 yields the following:</p>
+
+<p><img src="images/ZombieZipResults.png" alt="image" /></p>
+
+<p>Clicking on Downtown New York confirms your fears and suspicions:</p>
+
+<p><img src="images/ZombieGeohashResults.png" alt="image" /></p>
+
+<p>The geographic bounding inherent to GeoHashes is obvious in a point-dense area so in this case it would be best to query the adjacent GeoHashes.</p>
+
+<h3>Keep fighting the good fight!</h3>
+
+<p>There is plenty left to do in our battle against Zombies!</p>
+
+<ul>
+<li>Zombie Sighting Report System so the concentration of live zombies in an area can quickly be determined based on the count and last report date.</li>
+<li>Add a crowdsourced Inanimate Zombie Reporting System so that members of the non-zombie population can report inanimate zombies. Incorporate Baysian filtering to prevent false reporting by zombies. They kind of just mash on the keyboard so this shouldn&rsquo;t be too difficult.</li>
+<li>Add a correlation feature, utilizing Graph CRDTs, so we can find our way back to Patient Zero.</li>
+</ul>
+
+]]></content>
+  </entry>
+  
+</feed>

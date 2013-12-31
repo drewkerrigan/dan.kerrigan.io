@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Zombies - dan.kerrigan.io</title>
+  <meta name="author" content="Dan kerrigan">
+
+  
+  <meta name="description" content="The War against Zombies is still raging! In the United States, the CDC has recovered 1 million Acute Zombilepsy vicitims and has asked for our help &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://dan.kerrigan.io/zombies">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="dan.kerrigan.io" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+	<div class="header-title"><a href="/">dan.kerrigan.io</a></div>
+
+
+	<br><div class="header-subtitle">The Mythical Dan Month</div>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:dan.kerrigan.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">Zombies</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-31T12:53:57-05:00" pubdate data-updated="true">Dec 31<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>The War against Zombies is still raging!</h1>
+
+<p>In the United States, the CDC has recovered 1 million Acute Zombilepsy vicitims and has asked for our help loading the data into a Riak cluster for analysis and ground team support.</p>
+
+<h2>Know the Zombies, Know Thyself</h2>
+
+<p>The future of the world rests in a CSV file with the following fields:</p>
+
+<ol>
+<li>DNA</li>
+<li>Gender</li>
+<li>Full Name</li>
+<li>StreetAddress</li>
+<li>City</li>
+<li>State</li>
+<li>Zip Code</li>
+<li>TelephoneNumber</li>
+<li>Birthday</li>
+<li>National ID</li>
+<li>Occupation</li>
+<li>BloodType</li>
+<li>Pounds</li>
+<li>Feet Inches</li>
+<li>Latitude</li>
+<li>Longitude</li>
+</ol>
+
+
+<p>For each record, we&rsquo;ll serialize this CSV document into JSON and use the National ID as the Key.  Our ground teams need the ability to find concentrations of recovered zombie victims using a map so we&rsquo;ll be using the Zip code as an index value for quick lookup.  Additionally, we want to enable a geospatial lookup for zombies so we&rsquo;ll also <a href="http://en.wikipedia.org/wiki/Geohash">GeoHash</a> the latitude and longitude, truncate the hash to 4 characters for approximate area lookup, and use that an index term.  We&rsquo;ll use the GSet Term-Based Inverted Indexes that we created since the dataset will be exclusively for read operations once the dataset has been loaded.  We&rsquo;ve hosted this project at <a href="http://github.com/drewkerrigan/riak-inverted-index-demo/">Github</a> so that in the event we&rsquo;re over taken by Zombies our work can continue.</p>
+
+<p>In our load script, we read the text file and create new Zombies, add Indexes, then store the record:</p>
+
+<p><img src="images/load_data.rb.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/load_data.rb">load_data.rb script</a></p>
+
+<p>Our Zombie model contains the code for serialization and adding the indexes to the object:</p>
+
+<p><img src="images/zombie.rb_add_index.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/models/zombie.rb#L66-L68">zombie.rb add index</a></p>
+
+<p>Let&rsquo;s run some quick tests against the Riak HTTP interface to verify that zombie data exists.</p>
+
+<p>First let&rsquo;s query for a known zombilepsy victim:</p>
+
+<p><code>curl -v http://127.0.0.1:8098/buckets/zombies/keys/427-69-8179</code></p>
+
+<p>Next, let&rsquo;s query the inverted index that we created.  If the index has not been merged, then a list of siblings will be displayed:</p>
+
+<p>Zip Code for Jackson, MS:<br/>
+<code>curl -v -H "Accept: multipart/mixed" http://127.0.0.1:8098/buckets/zip_inv/keys/39201</code></p>
+
+<p>GeoHash for Washington DC:<br/>
+<code>curl -v -H "Accept: multipart/mixed" http://127.0.0.1:8098/buckets/geohash_inv/keys/dqcj</code></p>
+
+<p>Excellent.  Now we just have to get this information in the hands of our field team. We&rsquo;ve created a basic application which will allow our user to search by Zip Code or by clicking on the map.  When the user clicks on the map, the server converts the latitude/longitude pair into a GeoHash and uses that to query the inverted index.</p>
+
+<h3>Colocation and Riak MDC will Zombie-Proof your application</h3>
+
+<p>First we&rsquo;ll create small Sinatra application with the two endpoints required to search for zip code and latitude/longitude:</p>
+
+<p><img src="images/server.rb_endpoints.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/server.rb#L13-L29">server.rb endpoints</a></p>
+
+<p>Our zombie model does the work to retrieve the indexes and build the result set:</p>
+
+<p><img src="images/zombie.rb_search_index.png" alt="image" /></p>
+
+<p><a href="https://github.com/drewkerrigan/riak-inverted-index-demo/blob/master/models/zombie.rb#L19-L31">zombie.rb search index</a></p>
+
+<h3>Saving the world, one UI at a time</h3>
+
+<p>Everything wired up with a basic HTML and JavaScript application:</p>
+
+<p><img src="images/ZombieSearch.png" alt="image" /></p>
+
+<p>Searching for Zombies in the Zip Code 39201 yields the following:</p>
+
+<p><img src="images/ZombieZipResults.png" alt="image" /></p>
+
+<p>Clicking on Downtown New York confirms your fears and suspicions:</p>
+
+<p><img src="images/ZombieGeohashResults.png" alt="image" /></p>
+
+<p>The geographic bounding inherent to GeoHashes is obvious in a point-dense area so in this case it would be best to query the adjacent GeoHashes.</p>
+
+<h3>Keep fighting the good fight!</h3>
+
+<p>There is plenty left to do in our battle against Zombies!</p>
+
+<ul>
+<li>Zombie Sighting Report System so the concentration of live zombies in an area can quickly be determined based on the count and last report date.</li>
+<li>Add a crowdsourced Inanimate Zombie Reporting System so that members of the non-zombie population can report inanimate zombies. Incorporate Baysian filtering to prevent false reporting by zombies. They kind of just mash on the keyboard so this shouldn&rsquo;t be too difficult.</li>
+<li>Add a correlation feature, utilizing Graph CRDTs, so we can find our way back to Patient Zero.</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Dan kerrigan</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-31T12:53:57-05:00" pubdate data-updated="true">Dec 31<span>st</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/crdts/'>crdts,</a>, <a class='category' href='/blog/categories/riak/'>riak,</a>, <a class='category' href='/blog/categories/ruby/'>ruby,</a>, <a class='category' href='/blog/categories/zombies/'>zombies</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dan.kerrigan.io/zombies/" data-via="danthemyth" data-counturl="http://dan.kerrigan.io/zombies/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/index-for-fun-and-for-profit/" title="Previous Post: Index for Fun and for Profit">&laquo; Index for Fun and for Profit</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/zombies/">Zombies</a>
+      </li>
+    
+      <li class="post">
+        <a href="/index-for-fun-and-for-profit/">Index for Fun and for Profit</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/dankerrigan">@dankerrigan</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'dankerrigan',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 -  Dan kerrigan <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> + <a href="https://github.com/ioveracker/mnml">mnml</a>.
+	  
+  </span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>

@@ -1,0 +1,395 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Index for Fun and for Profit - dan.kerrigan.io</title>
+  <meta name="author" content="Dan kerrigan">
+
+  
+  <meta name="description" content="Index for Fun and for Profit What is an Index? In Riak, the fastest way to access your data is by its key. However, it&rsquo;s often useful to be &hellip;">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://dan.kerrigan.io/index-for-fun-and-for-profit">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="/atom.xml" rel="alternate" title="dan.kerrigan.io" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/lib/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="http://fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="http://fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Fjalla+One' rel='stylesheet' type='text/css'>
+  
+
+</head>
+
+<body   class="collapse-sidebar sidebar-footer" >
+  <header role="banner">
+	<div class="header-title"><a href="/">dan.kerrigan.io</a></div>
+
+
+	<br><div class="header-subtitle">The Mythical Dan Month</div>
+
+</header>
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="/atom.xml" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="http://google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:dan.kerrigan.io" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/about">About</a></li>
+</ul>
+
+</nav>
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+  
+    
+      <h1 class="entry-title">Index for Fun and for Profit</h1>
+    
+  
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-31T12:51:53-05:00" pubdate data-updated="true">Dec 31<span>st</span>, 2013</time>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><h1>Index for Fun and for Profit</h1>
+
+<h2>What is an Index?</h2>
+
+<p>In Riak, the fastest way to access your data is by its key.</p>
+
+<p>However, it&rsquo;s often useful to be able to locate objects by some other value, such as a named collection of users. Let&rsquo;s say that we have a user object stored under its username as the key (e.g., <code>thevegan3000</code>) and that this particular user is in the <code>Administrators</code> group.  If you wanted to be able to find all users such as <code>thevegan3000</code> who are in the <code>Administrators</code> group, then you would add an index (let&rsquo;s say, <code>user_group</code>) and set it to <code>administrator</code> for those users.  Riak has a super-easy-to-use option called <a href="http://docs.basho.com/riak/latest/dev/using/2i/">Secondary Indexes</a> that allows you to do exactly this and it&rsquo;s available when you use either the LevelDB or Memory backends.</p>
+
+<h2>Using Secondary Indexes</h2>
+
+<p>Secondary Indexes are available in the Riak APIs and all of the official Riak clients. Note that <code>user_group</code> becomes <code>user_group_bin</code> when accessing the API because we&rsquo;re storing a binary value (in most cases, a string).</p>
+
+<h3>Add and retrieve an index in the Ruby Client:</h3>
+
+<pre><code>user_object = ruby_client['users'].get_or_new('thevegan3000')
+user_object.indexes['user_group_bin'] &lt;&lt; 'administrator'
+user_object.store
+
+admin_user_keys = ruby_client['users'].get_index('user_group_bin', 'administrator')
+</code></pre>
+
+<h3>In the Python Client:</h3>
+
+<pre><code>user_object = python_client.bucket('users').get('thevegan3000)
+user_object.add_index('user_group_bin', 'administrator')
+user_object.store()
+
+admin_user_links = python_client.index('users', 'user_group_bin', 'administrator')
+</code></pre>
+
+<h3>In the Java Client:</h3>
+
+<pre><code>Bucket userBucket = riakClient.fetchBucket("users").execute();
+IRiakObject userObject = userBucket.fetch("thevegan3000").execute();
+userObject.addIndex("user_group_bin", "administrator");
+userBucket.store(userObject).execute();
+
+BinIndex binIndex = BinIndex.named("user_group_bin");
+BinValueQuery indexQuery = new BinValueQuery(binIndex, "users", "administrator");
+List&lt;String&gt; adminUserKeys = riakClient.fetchIndex(indexQuery);
+</code></pre>
+
+<h2>More Example Use Cases</h2>
+
+<p>Not only are indexes easy to use, they&rsquo;re extremely useful:</p>
+
+<ul>
+<li>Reference all orders belonging to a customer</li>
+<li>Save the users who liked something or the things that a user liked</li>
+<li>Tag content in a Content Management System (CMS)</li>
+<li>Store a GeoHash of a specific length for fast geographic lookup/filtering without expensive Geospatial operations</li>
+<li>Time-series data where all observations collected within a time-frame are referenced in a particular index</li>
+</ul>
+
+
+<h2>What If I Can&rsquo;t Use Secondary Indexes?</h2>
+
+<p>Indexing is great, but if you want to use the Bitcask backend or if Secondary Indexes aren&rsquo;t performant enough, there are alternatives.</p>
+
+<p>A G-Set Term-Based Inverted Index has the following benefits over a Secondary Index:</p>
+
+<ul>
+<li>Better read performance at the sacrifice of some write performance</li>
+<li>Less resource intensive for the Riak cluster</li>
+<li>Excellent resistance to cluster partition since CRDTs have defined sibling merge behavior</li>
+<li>Can be implemented on any Riak backend including <a href="http://docs.basho.com/riak/latest/ops/advanced/backends/bitcask/">Bitcask</a>, <a href="http://docs.basho.com/riak/latest/ops/advanced/backends/memory/">Memory</a>, and of course <a href="http://docs.basho.com/riak/latest/ops/advanced/backends/leveldb/">LevelDB</a></li>
+<li>Tunable via read and write parameters to improve performance</li>
+<li>Ideal when the exact index term is known</li>
+</ul>
+
+
+<h3>Implementation of a G-Set Term-Based Inverted Index</h3>
+
+<p>A G-Set CRDT (Grow Only Set Convergent/Commutative Replicated Data Type) is a thin abstraction on the Set data type (available in most language standard libraries). It has a defined method for merging conflicting values (i.e. Riak siblings), namely a union of the two underlying Sets.  In Riak, the G-Set becomes the value that we store in our Riak cluster in a bucket, and it holds a collection of keys to the objects we&rsquo;re indexing (such as <code>thevegan3000</code>).  The key that references this G-Set is the term that we&rsquo;re indexing, <code>administrator</code>.  The bucket containing the serialized G-Sets accepts Riak siblings (potentially conflicting values) which are resolved when the index is read.  Resolving the indexes involves merging the sibling G-Sets which means that keys cannot be removed from this index, hence the name: &ldquo;Grow Only&rdquo;.</p>
+
+<h4><code>administrator</code> G-Set Values prior to merging, represented by sibling values in Riak</h4>
+
+<p><img src="images/unmerged_gsets.png" alt="image" /></p>
+
+<h4><code>administrator</code> G-Set Value post merge, represented by a resolved value in Riak</h4>
+
+<p><img src="images/merged_gsets.png" alt="image" /></p>
+
+<h3>Great! Show me the code!</h3>
+
+<p>As a demonstration, we integrated this logic into a branch of the <a href="https://github.com/basho/riak-ruby-client/tree/broker-inverted-index">Riak Ruby Client</a>.  As mentioned before, since a G-Set is actually a very simple construct and Riak siblings are perfect to support the convergent properties of CRDTs, the implementation of a G-Set Term-Based Inverted Index is nearly trivial.</p>
+
+<p>There&rsquo;s a basic interface that belongs to a Grow Only Set in addition to some basic JSON serialization facilities (not shown):</p>
+
+<p><img src="images/gset.rb_interface.png" alt="image" /></p>
+
+<p><a href="https://github.com/basho/riak-ruby-client/blob/broker-inverted-index/lib/riak/crdt/gset.rb#L9-L21">gset.rb interface</a></p>
+
+<p>Next there&rsquo;s the actual implementation of the Inverted Index.  The index put operation simply creates a serialized G-Set with the single index value into Riak, likely creating a sibling in the process.</p>
+
+<p><img src="images/inverted_index.rb_put.png" alt="image" /></p>
+
+<p><a href="https://github.com/basho/riak-ruby-client/blob/broker-inverted-index/lib/riak/index/inverted_index.rb#L14-23">inverted_index.rb put index term</a></p>
+
+<p>The index get operation retrieves the index value.  If there are siblings, it resolves them by merging the underlying G-Sets, as described above, and writes the resolved record back into Riak.</p>
+
+<p><img src="images/inverted_index.rb_get.png" alt="image" /></p>
+
+<p><a href="https://github.com/basho/riak-ruby-client/blob/broker-inverted-index/lib/riak/index/inverted_index.rb#L25-L50">inverted_index.rb get index term</a></p>
+
+<p>With the modified Ruby client, adding a Term-Based Inverted Index is just as easy as a Secondary Index. Instead of using <code>_bin</code> to indicate a string index and we&rsquo;ll use <code>_inv</code> for our Term-Based Inverted Index.</p>
+
+<p>Binary Secondary Index: <code>zombie.indexes['zip_bin'] &lt;&lt; data['ZipCode']</code></p>
+
+<p>Term-Based Inverted Index: <code>zombie.indexes['zip_inv'] &lt;&lt; data['ZipCode']</code></p>
+
+<h3>The downsides of G-Set Term-Based Inverted Indexes versus Secondary Indexes</h3>
+
+<ul>
+<li>There is no way to remove keys from an index</li>
+<li>Storing a key/value pair with a Riak Secondary index takes about half the time as putting an object with a G-Set Term-Based Inverted Index because the G-Set index involves an additional Riak put operation for each index being added</li>
+<li>The Riak object which the index refers to has no knowledge of which indexes have been applied to it
+
+<ul>
+<li>It is possible, however, to update the metadata for the Riak object when adding its key to the G-Set</li>
+</ul>
+</li>
+<li>There is no option for searching on a range of values (e.g., all <code>user_group</code> values from <code>administrators</code> to <code>managers</code>)</li>
+</ul>
+
+
+<p>See the <a href="http://docs.basho.com/riak/latest/tutorials/querying/Secondary-Indexes/">Secondary Index documentation</a> for more details.</p>
+
+<h3>The downsides of G-Set Term-Based Inverted Indexes versus Riak Search:</h3>
+
+<p>Riak Search is an alternative mechanism for searching for content when you don&rsquo;t know which keys you want.</p>
+
+<ul>
+<li>No advanced searching: wildcards, boolean queries, range queries, grouping, etc</li>
+</ul>
+
+
+<p>See the <a href="http://docs.basho.com/riak/latest/tutorials/querying/Riak-Search/">Riak Search documentation</a> for more details.</p>
+
+<h2>I&rsquo;m from Missouri, the Show Me state. Let&rsquo;s see some graphs.</h2>
+
+<p>The graph below shows the average time to put an object with a single index and to retrieve a random index from the body of indexes that have already been written.  The times include the client-side merging of index object siblings.  It&rsquo;s clear that although the put times for an object + G-Set Term-Based Inverted Index are roughly double than that of an object with a Secondary Index, the index retrieval times are less than half.  This suggests that secondary indexes would be better for write-heavy loads but the G-Set Term-Based Inverted Indexes are much better where the ratio of reads is greater than the number of writes.</p>
+
+<p><img src="images/BenchMetrics.png" alt="image" /></p>
+
+<p>Over the length of the test, it is even clearer that G-Set Term-Based Inverted Indexes offer higher performance than Secondary Indexes when the workload of Riak skews toward reads.  The use of G-Set Term-Based Inverted Indexes is very compelling even when you consider that the index merging is happening on the client-side and could be moved to the server for greater performance.</p>
+
+<p><img src="images/BenchMetricsOpsSec.png" alt="image" /></p>
+
+<h2>Next Steps</h2>
+
+<ul>
+<li>Implement other CRDT Sets that support deletion</li>
+<li>Implement G-Set Term-Based Indexes as a Riak Core application so merges can run alongside the Riak cluster</li>
+<li>Implement strategies for handling large indexes such as term partitioning</li>
+</ul>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+  
+
+<span class="byline author vcard">Posted by <span class="fn">Dan kerrigan</span></span>
+
+      
+
+
+
+
+
+
+
+
+  
+
+
+<time datetime="2013-12-31T12:51:53-05:00" pubdate data-updated="true">Dec 31<span>st</span>, 2013</time>
+      
+
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/crdts/'>crdts</a>, <a class='category' href='/blog/categories/riak/'>riak,</a>, <a class='category' href='/blog/categories/ruby/'>ruby,</a>
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  <a href="http://twitter.com/share" class="twitter-share-button" data-url="http://dan.kerrigan.io/index-for-fun-and-for-profit/" data-via="danthemyth" data-counturl="http://dan.kerrigan.io/index-for-fun-and-for-profit/" >Tweet</a>
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+        <a class="basic-alignment right" href="/zombies/" title="Next Post: Zombies">Zombies &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/zombies/">Zombies</a>
+      </li>
+    
+      <li class="post">
+        <a href="/index-for-fun-and-for-profit/">Index for Fun and for Profit</a>
+      </li>
+    
+  </ul>
+</section>
+
+<section>
+  <h1>GitHub Repos</h1>
+  <ul id="gh_repos">
+    <li class="loading">Status updating...</li>
+  </ul>
+  
+  <a href="https://github.com/dankerrigan">@dankerrigan</a> on GitHub
+  
+  <script type="text/javascript">
+    $(document).ready(function(){
+        if (!window.jXHR){
+            var jxhr = document.createElement('script');
+            jxhr.type = 'text/javascript';
+            jxhr.src = '/javascripts/libs/jXHR.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(jxhr, s);
+        }
+
+        github.showRepos({
+            user: 'dankerrigan',
+            count: 0,
+            skip_forks: true,
+            target: '#gh_repos'
+        });
+    });
+  </script>
+  <script src="/javascripts/github.js" type="text/javascript"> </script>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2013 -  Dan kerrigan <br/>
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a> + <a href="https://github.com/ioveracker/mnml">mnml</a>.
+	  
+  </span>
+</p>
+
+</footer>
+  
+
+
+
+
+
+
+
+  <script type="text/javascript">
+    (function(){
+      var twitterWidgets = document.createElement('script');
+      twitterWidgets.type = 'text/javascript';
+      twitterWidgets.async = true;
+      twitterWidgets.src = 'http://platform.twitter.com/widgets.js';
+      document.getElementsByTagName('head')[0].appendChild(twitterWidgets);
+    })();
+  </script>
+
+
+
+
+
+</body>
+</html>
